@@ -1,0 +1,10 @@
+D:\1_润泽rpa\project\donet\MyWindowsApiTest\bin\Debug\MyWindowsApiTest.exe.config
+D:\1_润泽rpa\project\donet\MyWindowsApiTest\bin\Debug\MyWindowsApiTest.exe
+D:\1_润泽rpa\project\donet\MyWindowsApiTest\bin\Debug\MyWindowsApiTest.pdb
+D:\1_润泽rpa\project\donet\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.csprojAssemblyReference.cache
+D:\1_润泽rpa\project\donet\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.Form1.resources
+D:\1_润泽rpa\project\donet\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.Properties.Resources.resources
+D:\1_润泽rpa\project\donet\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.csproj.GenerateResource.cache
+D:\1_润泽rpa\project\donet\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.csproj.CoreCompileInputs.cache
+D:\1_润泽rpa\project\donet\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.exe
+D:\1_润泽rpa\project\donet\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.pdb
