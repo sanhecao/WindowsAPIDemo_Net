@@ -104,11 +104,21 @@ namespace MyWindowsApiTest
 
         [DllImport("user32.dll")]
         public extern static int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
-
+        //================================================================
+        //定义一个符合WINAPI返回值和参数的委托
+        public delegate bool CallBack(IntPtr hwnd, int lParam);
+        //声明符合上述委托的函数（定义一个函数指针）
+        private static CallBack myCallBack;
+        //===========================================================
 
         public Form1()
         {
+         
+            myCallBack = new CallBack(Report);
             InitializeComponent();
+            GetHandle("C#");
+            this.textBox1.Multiline = true;
+            this.textBox1.Dock = DockStyle.Fill;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -168,9 +178,91 @@ namespace MyWindowsApiTest
             {
               //  if (process.szWindowName == "微信")
                 {
-                    listBox1.Items.Add(process.hWnd + "=" + process.szClassName + "=" + process.szWindowName);
+                    listBox1.Items.Add(process.hWnd + "=" + process.cls + "=" + process.szWindowName);
                 }
             });
+        }
+
+        private void button3_Click_1(object sender, EventArgs e)
+        {
+            List<WindowInfo> list = GetApplication.GetRunApplicationInfo(this);
+            list.ForEach(process =>
+            {
+                //  if (process.szWindowName == "微信")
+                {
+                    listBox1.Items.Add(process.hWnd + "=====" + process.cls + "=====" + process.szWindowName + "=====" + process.app);
+                }
+            });
+        }
+        //=====================================================================
+        private void GetHandle(string windcaption)
+        {
+            IntPtr mainHandle = FindWindow(null, windcaption);
+            if (IntPtr.Zero != mainHandle)
+            {
+                AppendText(string.Format("{0}句柄：{1}", windcaption, Convert.ToString((int)mainHandle, 10)));
+
+                //EnumChildWindows((int)mainHandle, myCallBack, 0);
+                //修改窗口标题
+               // SetWindowText((int)mainHandle, "C#");
+                StringBuilder s = new StringBuilder(512);
+                //获取控件标题
+                int i = GetWindowText(mainHandle, s, s.Capacity);
+                AppendText(string.Format("..句柄{0}的caption：{1}", Convert.ToString((int)mainHandle, 10), s.ToString()));
+                //枚举所有子窗体，并将子窗体句柄传给myCallBack
+                EnumChildWindows((int)mainHandle, myCallBack, 0);
+            }
+        }
+
+        private void AppendText(string msg)
+        {
+            this.textBox1.AppendText(msg);
+            this.textBox1.AppendText("\r\n");
+        }
+        //根据窗体句柄，输出窗体caption
+        public bool Report(IntPtr hWnd, int lParam)
+        {
+            StringBuilder s = new StringBuilder(512);
+            int i = GetWindowText((IntPtr)hWnd, s, s.Capacity);
+            AppendText(string.Format("CallBack句柄{0}的caption：{1}", Convert.ToString((int)hWnd, 16), s.ToString()));
+            return true;
+        }
+
+        /// <summary>
+        /// 获取窗体的句柄函数
+        /// </summary>
+        /// <param name="lpClassName">窗口类名</param>
+        /// <param name="lpWindowName">窗口标题名</param>
+        /// <returns>返回句柄</returns>
+        [DllImport("user32.dll", EntryPoint = "FindWindow", SetLastError = true)]
+        public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+        [DllImport("user32.dll")]
+        public static extern int EnumWindows(CallBack x, int y);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr EnumChildWindows(int hWndParent, CallBack lpEnumFunc, int lParam);
+
+        [DllImport("user32.dll")]
+        public static extern int SetWindowText(int handle, string title);
+
+       // [DllImport("user32.dll", EntryPoint = "GetWindowText")]
+       // public static extern int GetWindowText(IntPtr hwnd, StringBuilder lpString, int cch);
+
+        [DllImport("User32.dll", EntryPoint = "SendMessage")]
+        private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, StringBuilder lParam);
+
+
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            StringBuilder s = new StringBuilder(512);
+            //获取控件标题,对TRichEdit无效
+            //int i = GetWindowText((IntPtr)int.Parse(txtHandle.Text), s, s.Capacity);
+            //获取控件标题,对TRichEdit有效
+            int i = SendMessage((IntPtr)int.Parse(txtHandle.Text), 0x000D, 1000, s);
+            AppendText(string.Format("句柄{0}的caption：{1}", txtHandle.Text, s.ToString()));
+
         }
     }
 }

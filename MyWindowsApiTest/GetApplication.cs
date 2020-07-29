@@ -34,15 +34,18 @@ namespace MyWindowsApiTest
         //获取窗口类名 
         [DllImport("user32.dll")]
         private static extern int GetClassNameW(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder lpString, int nMaxCount);
+        [DllImport("User32.dll", CharSet = CharSet.Auto)]
+        public static extern int GetClassName(IntPtr hWnd, out StringBuilder ClassName, int nMaxCount);
         [DllImport("user32.dll")]
         private static extern bool IsWindowVisible(int hWnd);
 
         //用来遍历所有窗口 
         [DllImport("user32.dll")]
         private static extern bool EnumWindows(WNDENUMPROC lpEnumFunc, int lParam);
+        [DllImport("user32.dll")]
+        private static extern bool EnumChildWindows(IntPtr hWndParent, WNDENUMPROC lpEnumFunc, int lParam);
 
         [DllImport("user32.dll", EntryPoint = "WIndowFromPoint")]//指定坐标处窗体句柄
-
         private static extern int WindowFromPoint(int xPoint, int yPoint);
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -59,6 +62,22 @@ namespace MyWindowsApiTest
         private const int WS_BORDER = 8388608;
         private const int GW_CHILD= 0;
 
+        //自定义一个类，用来保存句柄信息，在遍历的时候，随便也用空上句柄来获取些信息
+        public struct WindowInfo
+        {
+            public IntPtr hWnd;
+            public string szWindowName;
+            public string app;
+            public string AppPath;
+            public string cls;
+            public string isMDIChild;
+            public string PID;
+            public string position;
+            public string role;
+            public string TID;
+            public string subsystem;
+        }
+
         public static List<string> GetRunApplication(Form form)
         {
             List<string> appString = new List<string>();
@@ -73,7 +92,7 @@ namespace MyWindowsApiTest
                // hwCurr = GetWindow(handle, 5);
                 while (hwCurr > 0)
                 {
-                    //| WS_BORDER
+                    //| WS_BORDER 
                     int isTask = (WS_VISIBLE );
                     int lngStyle = GetWindowLongA(hwCurr, GWL_STYLE);
                     bool taskWindow = ((lngStyle & isTask) == isTask);
@@ -110,15 +129,67 @@ namespace MyWindowsApiTest
 
         }
 
-     
-       
-        //自定义一个类，用来保存句柄信息，在遍历的时候，随便也用空上句柄来获取些信息，呵呵 
-        public struct WindowInfo
+        public static List<WindowInfo> GetRunApplicationInfo(Form form)
         {
-            public IntPtr hWnd;
-            public string szWindowName;
-            public string szClassName;
+            List<WindowInfo> appList= new List<WindowInfo>();
+
+            try
+            {
+                int handle = (int)form.Handle;
+                //   int handle = (int)GetDesktopWindow();
+                int hwCurr;
+                IntPtr hwChild;
+                hwCurr = GetWindow(handle, GW_HWNDFIRST);
+                // hwCurr = GetWindow(handle, 5);
+                while (hwCurr > 0)
+                {
+                    //| WS_BORDER 
+                    int isTask = (WS_VISIBLE);
+                    int lngStyle = GetWindowLongA(hwCurr, GWL_STYLE);
+                    bool taskWindow = ((lngStyle & isTask) == isTask);
+                    if (taskWindow)
+                    {
+                        int length = GetWindowTextLength(new IntPtr(hwCurr));
+                        StringBuilder sb = new StringBuilder(2 * length + 1);
+                        GetWindowText(hwCurr, sb, sb.Capacity);
+                        string strTitle = sb.ToString();
+                        if (!string.IsNullOrEmpty(strTitle))
+                        {
+                            
+                            WindowInfo wnd = new WindowInfo();
+                            wnd.hWnd = new IntPtr(hwCurr);
+                            wnd.szWindowName = strTitle;
+                            GetClassNameW(new IntPtr(hwCurr), sb, sb.Capacity);
+                            wnd.cls = sb.ToString();
+                            GetWindowTextW(new IntPtr(hwCurr), sb, sb.Capacity);
+                            wnd.app = sb.ToString();
+                            appList.Add(wnd);
+                           // MessageBox.Show(sb.ToString());
+                            /*  //子窗口
+                                   hwChild =(IntPtr)  GetWindow(hwCurr, GW_CHILD);
+                              GetClassNameW(hwChild, sb, sb.Capacity);
+                              string strTitlechild = sb.ToString();
+                              if (!string.IsNullOrEmpty(strTitlechild))
+                              {
+                                  appString.Add(strTitle + "==" + strTitlechild);
+
+                              }*/
+
+                        }
+                    }
+                    hwCurr = GetWindow(hwCurr, GW_HWNDNEXT);
+                }
+                return appList;
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+
         }
+
+
         //用来保存窗口对象 列表
         static List<WindowInfo> wndList = new List<WindowInfo>();
         [StructLayout(LayoutKind.Sequential)]
@@ -154,8 +225,6 @@ namespace MyWindowsApiTest
                 //get window class 
                 GetClassNameW(hWnd, sb, sb.Capacity);              
                 
-
-
                 RECT rc = new RECT();
                 GetWindowRect(hWnd, ref rc);
                 int width = rc.Right - rc.Left;                        //窗口的宽度
@@ -163,7 +232,7 @@ namespace MyWindowsApiTest
                 int x = rc.Left;
                 int y = rc.Top;
 
-                wnd.szClassName = sb.ToString() + " 位置:" + width.ToString() + " " + height.ToString()
+                wnd.cls = sb.ToString() + " 位置:" + width.ToString() + " " + height.ToString()
                     + " " + x.ToString() + " " + y.ToString();
                 //add it into list 
                 wndList.Add(wnd);

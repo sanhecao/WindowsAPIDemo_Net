@@ -8,3 +8,13 @@ D:\1_润泽rpa\project\donet\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.csproj.
 D:\1_润泽rpa\project\donet\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.csproj.CoreCompileInputs.cache
 D:\1_润泽rpa\project\donet\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.exe
 D:\1_润泽rpa\project\donet\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.pdb
+C:\Users\redbencity\Desktop\HQP\MyGitHub\WindowsAPIDemo_Net\MyWindowsApiTest\bin\Debug\MyWindowsApiTest.exe.config
+C:\Users\redbencity\Desktop\HQP\MyGitHub\WindowsAPIDemo_Net\MyWindowsApiTest\bin\Debug\MyWindowsApiTest.exe
+C:\Users\redbencity\Desktop\HQP\MyGitHub\WindowsAPIDemo_Net\MyWindowsApiTest\bin\Debug\MyWindowsApiTest.pdb
+C:\Users\redbencity\Desktop\HQP\MyGitHub\WindowsAPIDemo_Net\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.csprojAssemblyReference.cache
+C:\Users\redbencity\Desktop\HQP\MyGitHub\WindowsAPIDemo_Net\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.Form1.resources
+C:\Users\redbencity\Desktop\HQP\MyGitHub\WindowsAPIDemo_Net\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.Properties.Resources.resources
+C:\Users\redbencity\Desktop\HQP\MyGitHub\WindowsAPIDemo_Net\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.csproj.GenerateResource.cache
+C:\Users\redbencity\Desktop\HQP\MyGitHub\WindowsAPIDemo_Net\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.csproj.CoreCompileInputs.cache
+C:\Users\redbencity\Desktop\HQP\MyGitHub\WindowsAPIDemo_Net\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.exe
+C:\Users\redbencity\Desktop\HQP\MyGitHub\WindowsAPIDemo_Net\MyWindowsApiTest\obj\Debug\MyWindowsApiTest.pdb
