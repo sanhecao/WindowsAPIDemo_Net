@@ -104,19 +104,76 @@ namespace MyWindowsApiTest
 
         [DllImport("user32.dll")]
         public extern static int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+        [DllImport("user32.dll")]
+        public extern static int GetParent(IntPtr hWnd);
+
+        /// <summary>
+        /// 闪烁窗口
+        /// </summary>
+        /// <param name="pwfi">窗口闪烁信息结构</param>
+        /// <returns></returns>
+        [DllImport("user32.dll")]
+        public static extern bool FlashWindowEx(ref FLASHWINFO pwfi);
+        /// <summary>
+        /// 闪烁类型
+        /// </summary>
+        public enum flashType : uint
+        {
+            FLASHW_STOP = 0, //停止闪烁
+            FALSHW_CAPTION = 1, //只闪烁标题
+            FLASHW_TRAY = 2, //只闪烁任务栏
+            FLASHW_ALL = 3, //标题和任务栏同时闪烁
+            FLASHW_PARAM1 = 4,
+            FLASHW_PARAM2 = 12,
+            FLASHW_TIMER = FLASHW_TRAY | FLASHW_PARAM1, //无条件闪烁任务栏直到发送停止标志或者窗口被激活，如果未激活，停止时高亮
+            FLASHW_TIMERNOFG = FLASHW_TRAY | FLASHW_PARAM2 //未激活时闪烁任务栏直到发送停止标志或者窗体被激活，停止后高亮
+        }
+
+        /// <summary>
+        /// 包含系统应在指定时间内闪烁窗口次数和闪烁状态的信息
+        /// </summary>
+        public struct FLASHWINFO
+        {
+            /// <summary>
+            /// 结构大小
+            /// </summary>
+            public uint cbSize;
+            /// <summary>
+            /// 要闪烁或停止的窗口句柄
+            /// </summary>
+            public IntPtr hwnd;
+            /// <summary>
+            /// 闪烁的类型
+            /// </summary>
+            public uint dwFlags;
+            /// <summary>
+            /// 闪烁窗口的次数
+            /// </summary>
+            public uint uCount;
+            /// <summary>
+            /// 窗口闪烁的频度，毫秒为单位；若该值为0，则为默认图标的闪烁频度
+            /// </summary>
+            public uint dwTimeout;
+        }
+
+
+
         //================================================================
         //定义一个符合WINAPI返回值和参数的委托
         public delegate bool CallBack(IntPtr hwnd, int lParam);
         //声明符合上述委托的函数（定义一个函数指针）
         private static CallBack myCallBack;
+        private static CallBack myCallBackNode;
         //===========================================================
 
         public Form1()
         {
          
             myCallBack = new CallBack(Report);
+            myCallBackNode = new CallBack(NodeReport);
             InitializeComponent();
-            GetHandle("C#");
+            GetHandle("UiPath Studio Pro Community - BlankProcess");
             this.textBox1.Multiline = true;
             this.textBox1.Dock = DockStyle.Fill;
         }
@@ -186,13 +243,102 @@ namespace MyWindowsApiTest
         private void button3_Click_1(object sender, EventArgs e)
         {
             List<WindowInfo> list = GetApplication.GetRunApplicationInfo(this);
+            string pId = "0";
             list.ForEach(process =>
             {
                 //  if (process.szWindowName == "微信")
                 {
-                    listBox1.Items.Add(process.hWnd + "=====" + process.cls + "=====" + process.szWindowName + "=====" + process.app);
+                    listBox1.Items.Add(process.hWnd + "=====cls:" + process.cls + "=====szWindowName:"
+                        + process.szWindowName + "=====PID:" + process.PID
+                        + "=====AppPath:" + process.AppPath
+                         + "=====Marks:" + process.marks
+                        );
+                    TITLEBARINFO pti = new TITLEBARINFO();
+                    pti.cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(pti);
+                    bool result = GetTitleBarInfo((IntPtr)process.hWnd, ref pti);//标题栏的按钮，最大化最小化，关闭
+        
+                    TreeNode node = new TreeNode();
+                    node.Text = process.szWindowName + "--" + process.cls + "--" + pti.rgstate[0].ToString();
+                    node.Tag = process.hWnd;// process.cls;
+                    pId = process.PID;
+                    RefreshChildNode(treeView1, node, "0");
+
+                    GetHandleNode(process.szWindowName, node);
                 }
             });
+            treeView1.ExpandAll();
+        }
+
+
+        //处理根节点的子节点
+        private void RefreshChildNode(TreeView tr1, TreeNode treeNode, string parentId)
+        {
+            foreach (TreeNode node in tr1.Nodes)
+            {
+                if (Convert.ToString(node.Tag) == parentId)
+                {
+                  //  MessageBox.Show(node.Tag.ToString());
+                    node.Nodes.Add(treeNode);
+                    return;
+                }
+                else if (node.Nodes.Count > 0)
+                {
+                    FindChildNode(node, treeNode, parentId);
+                }
+            }
+        }
+
+        //处理根节点的子节点的子节点
+        private void FindChildNode(TreeNode tNode, TreeNode treeNode, string parentId)
+        {
+            foreach (TreeNode node in tNode.Nodes)
+            {
+                if (Convert.ToString(node.Tag) == parentId)
+                {
+                    node.Nodes.Add(treeNode);
+                    return;
+                }
+                else if (node.Nodes.Count > 0)
+                {
+                    FindChildNode(node, treeNode, parentId);
+                }
+            }
+        }
+
+        private void GetHandleNode(string windcaption, TreeNode tnode)
+        {
+            IntPtr mainHandle = FindWindow(null, windcaption);
+            if (IntPtr.Zero != mainHandle)
+            {
+             //   AppendText(string.Format("{0}句柄：{1}", windcaption, Convert.ToString((int)mainHandle, 10)));
+                StringBuilder s = new StringBuilder(512);
+                //获取控件标题
+                int i = GetWindowText(mainHandle, s, s.Capacity);
+               // AppendText(string.Format("..句柄{0}的caption：{1}", Convert.ToString((int)mainHandle, 10), s.ToString()));
+                //枚举所有子窗体，并将子窗体句柄传给myCallBack
+                EnumChildWindows((int)mainHandle, myCallBackNode, 0);
+            }
+        }
+
+        public bool NodeReport(IntPtr hWnd, int lParam)
+        {
+           // MessageBox.Show(lParam.ToString());
+            StringBuilder s = new StringBuilder(512);
+            int i = GetWindowText((IntPtr)hWnd, s, s.Capacity);
+            string strTitlechild = s.ToString();
+            s.Clear();
+            // AppendText(string.Format("CallBack句柄{0}的caption：{1}", Convert.ToString((int)hWnd, 16), s.ToString()));
+            GetClassNameW((IntPtr)hWnd, s, s.Capacity);
+            strTitlechild = strTitlechild + "--" + s.ToString();
+
+           
+            TreeNode node = new TreeNode();
+            node.Text = strTitlechild;
+            node.Tag = Convert.ToString((int)hWnd, 10);
+            //查找父
+            string parentID = Convert.ToString(GetParent((IntPtr)hWnd));
+            RefreshChildNode(treeView1, node, parentID);
+            return true;
         }
         //=====================================================================
         private void GetHandle(string windcaption)
@@ -251,7 +397,9 @@ namespace MyWindowsApiTest
 
         [DllImport("User32.dll", EntryPoint = "SendMessage")]
         private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, StringBuilder lParam);
-
+        //获取窗口类名 
+        [DllImport("user32.dll")]
+        private static extern int GetClassNameW(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder lpString, int nMaxCount);
 
 
         private void button6_Click(object sender, EventArgs e)
@@ -263,6 +411,32 @@ namespace MyWindowsApiTest
             int i = SendMessage((IntPtr)int.Parse(txtHandle.Text), 0x000D, 1000, s);
             AppendText(string.Format("句柄{0}的caption：{1}", txtHandle.Text, s.ToString()));
 
+        }
+
+        /// <summary>
+        /// 闪烁窗口
+        /// </summary>
+        /// <param name="hWnd">窗口句柄</param>
+        /// <param name="type">闪烁类型</param>
+        /// <returns></returns>
+        public static bool FlashWindowEx(IntPtr hWnd, flashType type)
+        {
+            FLASHWINFO fInfo = new FLASHWINFO();
+            fInfo.cbSize = Convert.ToUInt32(Marshal.SizeOf(fInfo));
+            fInfo.hwnd = hWnd;//要闪烁的窗口的句柄，该窗口可以是打开的或最小化的
+            fInfo.dwFlags = (uint)type;//闪烁的类型
+            fInfo.uCount = UInt32.MaxValue;//闪烁窗口的次数
+            fInfo.dwTimeout = 3; //窗口闪烁的频度，毫秒为单位；若该值为0，则为默认图标的闪烁频度
+            return FlashWindowEx(ref fInfo);
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            IntPtr mainHandle = FindWindow(null, "C#");
+            if (IntPtr.Zero != mainHandle)
+            {
+                FlashWindowEx(mainHandle, flashType.FLASHW_ALL);
+            }
         }
     }
 }
